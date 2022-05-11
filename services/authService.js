@@ -1,4 +1,5 @@
 const knex = require('../db');
+const CustomError = require('../handlers/errorHandler')
 
 class AuthService {
 
@@ -15,7 +16,7 @@ class AuthService {
             .where({ activation_link: activationLink })
 
         if (!link) {
-            throw new Error('uncorrected activation link')
+            throw CustomError.BadRequest('uncorrected activation link')
         }
 
         await knex('users')

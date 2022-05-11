@@ -6,8 +6,9 @@ const { promisify } = require('util')
 const scrypt = promisify(crypto.scrypt)
 const tokenService = require('../services/tokenService')
 const UserDto = require('../dtos/userDto')
-const EmailService = require('../services/emailService');
+const EmailService = require('../services/emailService')
 const AuthService = require('../services/authService')
+const CustomError = require('../handlers/errorHandler')
 
 class UserController {
 
@@ -15,7 +16,7 @@ class UserController {
         const [user] = await knex('users')
             .select('*')
         if (!user) {
-            res.status(404).send({error: {code: 404, message: 'users not found'}})
+            throw CustomError.UnauthorizedErr('user not found')
             return
         }
         res.status(200).send(user)
@@ -29,7 +30,8 @@ class UserController {
             .where({ id: userId })
             .first()
         if (!user) {
-            res.status(404).send({ error: {code: 404, message: 'user not found' }})
+            throw CustomError.UnauthorizedErr('user not found')
+
             return
         }
         res.status(200).send(user)
@@ -63,7 +65,7 @@ class UserController {
 
     await trx.commit()
         if (!user) {
-            res.status(404).send({error: {code: 404, message: 'user not register'}})
+            throw CustomError.UnauthorizedErr('user not register')
             return
         }
 
