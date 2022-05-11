@@ -1,4 +1,4 @@
-const knex = require('../db');
+const knex = require('../db')
 const jwt = require('jsonwebtoken')
 
 const checkTokenInDb = async (userId) => {
@@ -21,6 +21,23 @@ class TokenService {
         }
     }
 
+    validateAccessToken(token) {
+        try {
+            const userData = jwt.verify(token, process.env.JWT_ACCESS_SECRET)
+            return userData
+        } catch (e) {
+            return null
+        }
+    }
+    validateRefreshToken(token) {
+        try {
+            const userData = jwt.verify(token, process.env.JWT_REFRESH_SECRET)
+            return userData
+        } catch (e) {
+            return null
+        }
+    }
+
     async saveToken(userId, refreshToken) {
         const tokenData = await checkTokenInDb(userId)
 
@@ -38,8 +55,25 @@ class TokenService {
 
             await trx.commit()
         }
-
     }
+
+    async removeToken(refreshToken) {
+        const tokenData = await knex('tokens')
+            .where({ refreshToken: refreshToken })
+            .del()
+        return tokenData
+    }
+
+    async findToken(refreshToken) {
+        const tokenData = await knex('tokens')
+            .select('*')
+            .where({ refreshToken: refreshToken })
+            .first()
+        return tokenData
+    }
+
+
+
 
 }
 

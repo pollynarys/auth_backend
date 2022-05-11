@@ -5,7 +5,7 @@ const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const routes = require('./routes/index')
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT
 const app = express()
 
 app.use(express.json())
@@ -17,7 +17,7 @@ const start = async () => {
     try {
         app.listen(PORT, () => console.log(`server started on ${PORT} port`))
     } catch (e) {
-        console.log(e);
+        console.log(e)
     }
 }
 
