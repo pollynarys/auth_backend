@@ -1,5 +1,5 @@
 const { attachPaginate } = require('knex')
-const knex = require('knex')(require('../knexfile').development);
+const knex = require('knex')(require('../knexfile').development)
 
 // attachPaginate()
 

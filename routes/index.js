@@ -2,12 +2,17 @@ const UserController = require('../controllers/UserController')
 const PostController = require('../controllers/PostController')
 const AuthController = require('../controllers/AuthController')
 const asyncHandler = require('express')
-const Router = require('express');
+const Router = require('express')
 const router = new Router()
+const { body } = require('express-validator')
+const authMiddleware = require('../middlewares/authMiddlewares')
 
-router.get('/api/user/get_users', UserController.getUsers)
+router.post('/api/user/create_user',
+    body('email').isEmail(),
+    body('password').isLength({ min: 3, max: 32 }),
+    UserController.createUser)
+router.get('/api/user/get_users', authMiddleware, UserController.getUsers)
 router.get('/api/user/:userId/get_user', UserController.getUser)
-router.post('/api/user/create_user', UserController.createUser)
 router.put('/api/user/update_user', UserController.updateUser)
 router.delete('/api/user/:userId/delete_user', UserController.deleteUser)
 

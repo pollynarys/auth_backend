@@ -6,7 +6,7 @@ class PostController {
         const [posts] = await knex('posts')
             .select('*')
         if (!posts) {
-            res.status(404).send({error: {code: 404, message: 'users not found'}})
+            res.status(404).send({error: {code: 404, message: 'post not found'}})
             return
         }
         res.status(200).send(posts)

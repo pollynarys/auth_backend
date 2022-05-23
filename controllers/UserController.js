@@ -9,17 +9,18 @@ const UserDto = require('../dtos/userDto')
 const EmailService = require('../services/emailService')
 const AuthService = require('../services/authService')
 const CustomError = require('../handlers/errorHandler')
+const { validationResult } = require('express-validator')
+const UserService = require('../services/userService')
 
 class UserController {
 
-    async getUsers(req, res) {
-        const [user] = await knex('users')
-            .select('*')
-        if (!user) {
-            throw CustomError.UnauthorizedErr('user not found')
-            return
+    async getUsers(req, res, next) {
+        try {
+            const users = UserService.getAllUsers()
+            return res.json(users)
+        } catch (e) {
+            next(e)
         }
-        res.status(200).send(user)
     }
 
     async getUser(req, res) {
@@ -30,27 +31,33 @@ class UserController {
             .where({ id: userId })
             .first()
         if (!user) {
-            throw CustomError.UnauthorizedErr('user not found')
-
+            res.status(404).send({ error: {code: 404, message: 'user not found' }})
             return
         }
         res.status(200).send(user)
     }
 
-    async createUser(req, res) {
-        const { username, email, password } = req.body
+    async createUser(req, res, next) {
+        try {
+            const errors = validationResult(req)
+            if (!errors.isEmpty()) {
+                return next (CustomError.BadRequest('validation error', errors.array()))
+            }
 
-        const isUserInDb = await AuthService.checkUserInDb({ username })
+            const { username, email, password } = req.body
+
+            const isUserInDb = await AuthService.checkUserInDb({ username })
         if (isUserInDb) {
-            req.status(400).send({ error: {code: 400, message: 'this username already exist' }})
+            throw CustomError.BadRequest('this username already exist')
             return
         }
-        const salt = crypto.randomBytes(8).toString('hex')
-        const derivedKey = await scrypt(password, salt, 64)
-        const encryptedPassword = `${salt}:${derivedKey.toString('hex')}`
+        await AuthService.encryptString(password)
+        // const salt = crypto.randomBytes(8).toString('hex')
+        // const derivedKey = await scrypt(password, salt, 64)
+        // const encryptedPassword = `${salt}:${derivedKey.toString('hex')}`
 
-        // const activationLink = uuid.v4();
-        const activationLink = uuidv4();
+        // const activationLink = uuid.v4()
+        const activationLink = uuidv4()
 
 
         const trx = await knex.transaction()
@@ -65,7 +72,7 @@ class UserController {
 
     await trx.commit()
         if (!user) {
-            throw CustomError.UnauthorizedErr('user not register')
+            res.status(404).send({error: {code: 404, message: 'user not register'}})
             return
         }
 
@@ -78,6 +85,9 @@ class UserController {
 
         res.cookie('refreshToken', tokens.refreshToken, { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true }) //https: true
         res.status(200).send(user)
+        } catch (e) {
+            next(e)
+        }
 
         return {
             ...tokens,

@@ -1,0 +1,45 @@
+{
+    "env": {
+        "commonjs": true,
+        "es2021": true,
+        "node": true,
+        "mocha": true,
+        "truffle/globals": true
+    },
+    "plugins": [
+        "mocha",
+        "truffle",
+        "babel"
+    ],
+    "extends": [
+        "airbnb-base"
+    ],
+    "parserOptions": {
+        "ecmaVersion": 2020
+    },
+    "rules": {
+        "no-console": 0,
+        "max-len": [2, 145, 4, {"ignoreUrls": true}],
+        "semi": [
+            "error",
+            "never"
+        ],
+        "quotes": [
+            "error",
+            "single"
+        ],
+        "no-plusplus": [
+            "error",
+            {
+                "allowForLoopAfterthoughts": true
+            }
+        ],
+        "no-await-in-loop": "off",
+        "radix": "off",
+        "import/extensions": "off",
+        "babel/object-curly-spacing": 1,
+        "babel/camelcase": 1,
+        "babel/no-unused-expressions": 1,
+        "babel/valid-typeof": 1
+    }
+}
