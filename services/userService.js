@@ -5,6 +5,13 @@ const tokenService = require('../services/tokenService')
 
 
 class UserService {
+    checkUserInDb = async ({ username }) => {
+        const [user] = await knex('users')
+            .select('*')
+            .where({ username })
+        return !!user
+    }
+
     async getAllUsers(req, res) {
         const [user] = await knex('users')
             .select('*')

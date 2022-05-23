@@ -1,7 +1,25 @@
 const knex = require('../db')
 const AuthService = require('../services/authService')
+const {validationResult} = require("express-validator");
+const CustomError = require("../handlers/errorHandler");
+const {v4: uuidv4} = require("uuid");
+const UserDto = require("../dtos/userDto");
+const EmailService = require("../services/emailService");
+const tokenService = require("../services/tokenService");
 
 class AuthController {
+    async register(req, res, next) {
+        try {
+            const { username, email , password } = req.body
+            const userData = await AuthService.register(username, email , password)
+
+            res.cookie('refreshToken', userData.refreshToken, { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true }) //https: true
+            res.status(200).send(userData)
+        } catch (e) {
+            next(e)
+        }
+    }
+
     async login(req, res, next) {
         try {
             const { email, password } = req.body
@@ -11,7 +29,6 @@ class AuthController {
 
         } catch (e) {
             next(e)
-
         }
     }
 

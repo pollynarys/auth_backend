@@ -51,9 +51,10 @@ class UserController {
             throw CustomError.BadRequest('this username already exist')
             return
         }
-        const salt = crypto.randomBytes(8).toString('hex')
-        const derivedKey = await scrypt(password, salt, 64)
-        const encryptedPassword = `${salt}:${derivedKey.toString('hex')}`
+        await AuthService.encryptString(password)
+        // const salt = crypto.randomBytes(8).toString('hex')
+        // const derivedKey = await scrypt(password, salt, 64)
+        // const encryptedPassword = `${salt}:${derivedKey.toString('hex')}`
 
         // const activationLink = uuid.v4()
         const activationLink = uuidv4()

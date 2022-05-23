@@ -2,6 +2,17 @@ const knex = require('../db')
 const CustomError = require('../handlers/errorHandler')
 const UserDto = require('../dtos/userDto')
 const tokenService = require('../services/tokenService')
+const crypto = require('crypto')
+const { promisify } = require('util')
+const {v4: uuidv4} = require("uuid");
+const EmailService = require("../services/emailService");
+const scrypt = promisify(crypto.scrypt)
+
+const encryptString = async (str) => {
+    const salt = crypto.randomBytes(8).toString('hex')
+    const derivedKey = await scrypt(str, salt, 64)
+    return `${salt}:${derivedKey.toString('hex')}`
+}
 
 
 class AuthService {
@@ -11,6 +22,42 @@ class AuthService {
             .select('*')
             .where({ username })
         return !!user
+    }
+
+    async register(username, email, password) {
+        const isUserInDb = await AuthService.checkUserInDb({ username })
+        if (isUserInDb) {
+            throw CustomError.BadRequest('this username already exist')
+            return
+        }
+        const encryptedPassword = await encryptString(password)
+        const activationLink = uuidv4()
+
+        const trx = await knex.transaction()
+        const [user] = await trx('users').insert({
+            username: username,
+            password: encryptedPassword,
+            email: email,
+            is_activated: false,
+            activation_link: activationLink
+        }).returning('*')
+
+        await trx.commit()
+        if (!user) {
+            throw CustomError.BadRequest('user not register')
+            return
+        }
+
+        const userDto = new UserDto(user)
+        await EmailService.sendMailActivation(email, `${process.env.API_URL}/api/auth/activate/${activationLink}`)
+
+        const tokens = tokenService.generateTokens({...userDto})
+        await tokenService.saveToken(userDto.id, tokens.refreshToken)
+
+    return {
+            ...tokens,
+        user: userDto
+        }
     }
 
     async activate(activationLink) {
@@ -36,7 +83,8 @@ class AuthService {
             throw CustomError.BadRequest('user not found')
             return
         }
-        const isPassCompare = await bcrypt.compare(password, user.password)
+        const isPassCompare = await this.encryptString(password)
+
         if (!isPassCompare) {
             throw CustomError.BadRequest('uncorrected password')
         }
