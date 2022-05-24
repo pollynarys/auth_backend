@@ -1,10 +1,11 @@
 const knex = require('../db')
-const CustomError = require('../handlers/errorHandler')
-const UserDto = require('../dtos/userDto')
-const tokenService = require('../services/tokenService')
-
 
 class UserService {
+    /**
+     * Check user in database
+     * @param {string} username
+     * @returns {object | null} - userData or null in the event of an error
+     */
     checkUserInDb = async ({ username }) => {
         const [user] = await knex('users')
             .select('*')
@@ -12,14 +13,17 @@ class UserService {
         return !!user
     }
 
+    /**
+     * Get all users. Available at for authorized users
+     */
     async getAllUsers(req, res) {
-        const [user] = await knex('users')
+        const [users] = await knex('users')
             .select('*')
-        if (!user) {
+        if (!users) {
             res.status(404).send({error: {code: 404, message: 'users not found'}})
             return
         }
-        res.status(200).send(user)
+        res.status(200).send(users)
     }
 }
 

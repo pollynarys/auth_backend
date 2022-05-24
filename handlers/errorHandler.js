@@ -12,6 +12,10 @@ module.exports = class CustomError extends Error {
         return new CustomError(401, 'user unauthorized')
     }
 
+    static noAccess() {
+        return new CustomError(401, 'no access')
+    }
+
     static BadRequest(message, errors = []) {
         return new CustomError(400, message, errors)
     }

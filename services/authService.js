@@ -1,38 +1,52 @@
 const knex = require('../db')
 const CustomError = require('../handlers/errorHandler')
-const knex = require('../db')
-const CustomError = require('../handlers/errorHandler')
 const UserDto = require('../dtos/userDto')
 const tokenService = require('../services/tokenService')
+const EmailService = require('../services/emailService')
 const crypto = require('crypto')
 const { promisify } = require('util')
-const {v4: uuidv4} = require("uuid");
-const EmailService = require("../services/emailService");
+const { v4: uuidv4 } = require('uuid')
 const scrypt = promisify(crypto.scrypt)
 
-const encryptString = async (str) => {
-    const salt = crypto.randomBytes(8).toString('hex')
-    const derivedKey = await scrypt(str, salt, 64)
-    return `${salt}:${derivedKey.toString('hex')}`
-}
-
-
 class AuthService {
-
-    checkUserInDb = async ({ username }) => {
+    /**
+     * Check user in database
+     * @param {object} username - Search username
+     * @returns {object} result of search
+     */
+    async checkUserInDb ({ username }) {
         const [user] = await knex('users')
             .select('*')
             .where({ username })
         return !!user
     }
 
-    async register(username, email, password) {
-        const isUserInDb = await AuthService.checkUserInDb({ username })
+    /**
+     * Encrypt password
+     * @param {string} str - password
+     * @returns {string} password hash
+     */
+    async encryptString (str) {
+        const salt = crypto.randomBytes(8).toString('hex')
+        const derivedKey = await scrypt(str, salt, 64)
+        return `${salt}:${derivedKey.toString('hex')}`
+    }
+
+    /**
+     * Register user
+     * @param {string} username
+     * @param {string} email
+     * @param {string} password
+     * @param {string} role
+     * @returns {object} access and refresh tokens array, user dto object
+     */
+    async register(username, email, password, role) {
+        const isUserInDb = await this.checkUserInDb({ username })
         if (isUserInDb) {
             throw CustomError.BadRequest('this username already exist')
             return
         }
-        const encryptedPassword = await encryptString(password)
+        const encryptedPassword = await this.encryptString(password)
         const activationLink = uuidv4()
 
         const trx = await knex.transaction()
@@ -40,6 +54,7 @@ class AuthService {
             username: username,
             password: encryptedPassword,
             email: email,
+            role: role,
             is_activated: false,
             activation_link: activationLink
         }).returning('*')
@@ -62,6 +77,10 @@ class AuthService {
         }
     }
 
+    /**
+     * Activate link
+     * @param {string} activationLink
+     */
     async activate(activationLink) {
         const [link] = await knex('users')
             .select('*')
@@ -76,6 +95,12 @@ class AuthService {
             .update({ is_activated: true })
     }
 
+    /**
+     * Login user
+     * @param {string} email
+     * @param {string} password
+     * @returns {object} access and refresh tokens array, user dto object
+     */
     async login(email, password) {
         const user = await knex('users')
             .select('*')
@@ -85,7 +110,9 @@ class AuthService {
             throw CustomError.BadRequest('user not found')
             return
         }
-        const isPassCompare = await this.encryptString(password)
+
+        const pass = await this.encryptString(password)
+        const isPassCompare = pass === user.password
 
         if (!isPassCompare) {
             throw CustomError.BadRequest('uncorrected password')
@@ -100,12 +127,21 @@ class AuthService {
         }
     }
 
+    /**
+     * Logout user
+     * @param {string} refreshToken
+     * @returns {string} token
+     */
     async logout(refreshToken) {
         const token = await tokenService.removeToken(refreshToken)
         return token
     }
 
-
+    /**
+     * Refresh token
+     * @param {string} refreshToken
+     * @returns {object} access and refresh tokens array, user dto object
+     */
     async refresh(refreshToken) {
         if (!refreshToken) throw CustomError.UnauthorizedErr()
 

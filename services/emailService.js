@@ -1,4 +1,3 @@
-const knex = require('../db')
 const nodemailer = require('nodemailer')
 
 class EmailService {
@@ -13,6 +12,11 @@ class EmailService {
             }
         })
     }
+    /**
+     * Send email with activation link
+     * @param {string} to - email adders
+     * @param {string} link - activation link
+     */
     async sendMailActivation (to, link) {
         await this.transporter.sendMail({
             from: process.env.SMTP_USER,
@@ -27,9 +31,7 @@ class EmailService {
                     </div>
                 `
         })
-
     }
-
 }
 
 module.exports = new EmailService ()
