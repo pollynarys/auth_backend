@@ -85,8 +85,9 @@ class TokenService {
      */
     async removeToken(refreshToken) {
         const tokenData = await knex('tokens')
-            .where({ refreshToken: refreshToken })
+            .where({ refresh_token: refreshToken })
             .del()
+            .returning('*')
         return tokenData
     }
 

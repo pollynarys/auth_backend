@@ -1,8 +1,8 @@
 const AuthService = require('../services/authService')
 const logger = require('../logger/logger')
 const { MONTH } = require('../const')
-const {validationResult} = require("express-validator");
-const CustomError = require("../handlers/errorHandler");
+const {validationResult} = require('express-validator')
+const CustomError = require('../handlers/errorHandler')
 
 class AuthController {
     async register(req, res, next) {
@@ -39,8 +39,8 @@ class AuthController {
     async logout(req, res, next) {
         try {
             const { refreshToken } = req.cookies
-            const token = AuthService.logout(refreshToken)
-            res.clear.cookie('refreshToken')
+            const token = await AuthService.logout(refreshToken)
+            res.clearCookie('refreshToken')
             return res.json(token) // status 200
         } catch (e) {
             logger.error('Unable to logout')

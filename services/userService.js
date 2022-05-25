@@ -1,4 +1,5 @@
 const knex = require('../db')
+const UserDto = require('../dtos/userDto')
 
 class UserService {
     /**
@@ -23,7 +24,9 @@ class UserService {
             res.status(404).send({error: {code: 404, message: 'users not found'}})
             return
         }
-        res.status(200).send(users)
+        // const userDto = new UserDto(user)
+        // res.status(200).send(users)
+        return users
     }
 }
 

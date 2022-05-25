@@ -22,7 +22,7 @@ class AuthService {
     }
 
     /**
-     * Encrypt password
+     * Encrypt the password
      * @param {string} str - password
      * @returns {string} password hash
      */
@@ -31,6 +31,17 @@ class AuthService {
         const derivedKey = await scrypt(str, salt, 64)
         return `${salt}:${derivedKey.toString('hex')}`
     }
+
+    /**
+     * Compare password
+     * @param {string} str - str
+     * @param {string} str - password
+     * @returns {string} - decrypted password
+     */
+    async CompareString (str, password) {
+
+    }
+
 
     /**
      * Register user
@@ -111,12 +122,12 @@ class AuthService {
             return
         }
 
-        const pass = await this.encryptString(password)
-        const isPassCompare = pass === user.password
-
-        if (!isPassCompare) {
-            throw CustomError.BadRequest('uncorrected password')
+        const [salt, key] = user.password.split(':')
+        const derivedKey = await scrypt(password, salt, 64)
+        if (key !== derivedKey.toString('hex')) {
+            throw new Error('Wrong username or password')
         }
+
         const userDto = new UserDto(user)
 
         const tokens = tokenService.generateTokens({...userDto})

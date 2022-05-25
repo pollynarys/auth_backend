@@ -1,13 +1,13 @@
 const knex = require('../db')
 const UserService = require('../services/userService')
-const logger = require("../logger/logger");
+const logger = require('../logger/logger')
 
 class UserController {
 
     async getUsers(req, res, next) {
         try {
-            const users = UserService.getAllUsers()
-            return res.json(users)
+            const users = await UserService.getAllUsers()
+            res.status(200).send(users)
         } catch (e) {
             logger.error('Unable to get users')
             next(e)
