@@ -27,7 +27,7 @@ class AuthService {
      * @returns {string} password hash
      */
     async encryptString (str) {
-        const salt = crypto.randomBytes(8).toString('hex')
+        const salt = crypto.randomBytes(16).toString('hex')
         const derivedKey = await scrypt(str, salt, 64)
         return `${salt}:${derivedKey.toString('hex')}`
     }
